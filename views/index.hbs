@@ -19,19 +19,14 @@
     </div>
     {{else}}
     {{/if}}
-    <a href="/moveHome">home</a>
-    <a href="/move">{{root}}</a>
+    <a href="#">{{root}}</a>
     <div class="folders-div">
       {{#each folders}}
       <div class="folders">
         <form class="form-css" method="get">
           <img src="../images/folder.png" alt="folders-img" class="folders-img">
           <button class="folders-btn" formaction="/deleteFolder" name="id" type="submit" value="{{this}}">X</button>
-          <br>
-          <div style="display: flex; justify-content:center;">
-            <button class="folders-name" formaction="/move" name="root" type="submit" value="{{root}}/{{this}}">
-              {{this}}</button>
-          </div>
+          <p class=" folders-name"> {{this}}</p>
         </form>
       </div>
       {{/each}}
