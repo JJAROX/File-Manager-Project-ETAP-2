@@ -7,12 +7,12 @@ const hbs = require('express-handlebars');
 const fs = require("fs")
 const path = require("path");
 const { log } = require("console");
-const filepath = path.join(__dirname, "upload")
-
 let context = {
   files: [],
   folders: [],
+  root: 'upload'
 }
+let filepath = path.join(__dirname, "upload")
 app.use(express.urlencoded({
   extended: true
 }));
@@ -81,6 +81,7 @@ app.get("/", function (req, res) {
     context.folders.splice(0, context.folders.length)
     context.Message = null
   } else {
+
   }
 
   console.log(context);
@@ -88,8 +89,8 @@ app.get("/", function (req, res) {
 })
 
 app.post("/savefile", (req, res) => {
-  if (!fs.existsSync(`upload/${req.body.inputText}`)) {
-    fs.appendFile(path.join(__dirname, "upload", req.body.inputText), "", (err) => {
+  if (!fs.existsSync(`${req.body.root}/${req.body.inputText}`)) {
+    fs.appendFile(path.join(__dirname, req.body.root, req.body.inputText), "", (err) => {
       if (err) throw err
       console.log("plik utworzony");
       context.files.push(req.body.inputText)
@@ -97,7 +98,20 @@ app.post("/savefile", (req, res) => {
     })
     fs.readdir(filepath, (err, files) => {
       if (err) throw err
-      console.log("lista", files);
+      context.folders = []
+      context.files = []
+      files.forEach((file) => {
+        const fullPath = path.join(filepath, file)
+        fs.lstat(fullPath, (err, stats) => {
+          console.log(file, stats.isDirectory())
+          if (stats.isDirectory()) {
+            context.folders.push(file)
+          } else {
+            context.files.push(file)
+          }
+          console.log(context)
+        })
+      })
     })
     console.log(context);
     context.Message = null
@@ -109,11 +123,10 @@ app.post("/savefile", (req, res) => {
 
 })
 app.post("/savefolder", (req, res) => {
-  if (!fs.existsSync(`upload/${req.body.inputText}`)) {
-    fs.mkdir(`upload/${req.body.inputText}`, (err) => {
+  if (!fs.existsSync(`${req.body.root}/${req.body.inputText}`)) {
+    fs.mkdir(`${req.body.root}/${req.body.inputText}`, (err) => {
       if (err) throw err
       console.log("jest");
-      context.folders.push(req.body.inputText)
     })
     console.log(req.body.inputText);
     fs.readdir(filepath, (err, files) => {
@@ -135,7 +148,7 @@ app.post('/upload', (req, res) => {
   let form = formidable({});
   form.keepExtensions = true;
   form.multiples = true;
-  form.uploadDir = __dirname + '/upload/';
+  form.uploadDir = __dirname + `/${context.root}/`;
 
   form.on('fileBegin', function (name, file) {
     file.path = form.uploadDir + "/" + file.name;
@@ -232,4 +245,54 @@ app.get('/deleteFile', (req, res) => {
     console.log('ŁOT');
   }
   res.redirect('/');
+})
+
+app.get('/move', (req, res) => {
+  filepath = path.join(__dirname, `upload${req.query.root}`)
+  context.root = `upload${req.query.root}`
+  console.log(req.query);
+  fs.readdir(filepath, (err, files) => {
+    if (err) throw err
+    context.folders = []
+    context.files = []
+    files.forEach((file) => {
+      const fullPath = path.join(filepath, file)
+      fs.lstat(fullPath, (err, stats) => {
+        console.log(file, stats.isDirectory())
+        if (stats.isDirectory()) {
+
+          context.folders.push(file)
+        } else {
+
+          context.files.push(file)
+        }
+        console.log(context)
+      })
+    })
+  })
+  res.redirect('/')
+})
+app.get('/moveHome', (req, res) => {
+  filepath = path.join(__dirname, `upload`)
+  context.root = 'upload'
+  fs.readdir(filepath, (err, files) => {
+    if (err) throw err
+    context.folders = []
+    context.files = []
+    files.forEach((file) => {
+      const fullPath = path.join(filepath, file)
+      fs.lstat(fullPath, (err, stats) => {
+        console.log(file, stats.isDirectory())
+        if (stats.isDirectory()) {
+
+          context.folders.push(file)
+        } else {
+
+          context.files.push(file)
+        }
+        console.log(context)
+      })
+    })
+  })
+  res.redirect('/')
 })
